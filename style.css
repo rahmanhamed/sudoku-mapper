@@ -1,0 +1,140 @@
+
+#container {
+    box-sizing: border-box;
+    display: flex;
+    border: solid;
+    width: min(calc(100vh - 60px), calc(100vw - 60px));
+    flex-wrap: wrap;
+    justify-content: space-around;
+    height: min(calc(100vh - 60px), calc(100vw - 60px));
+    align-items: center;
+    align-content: space-around;
+}
+
+.square {
+    box-sizing: border-box;
+    width: 32%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    background: #fff;
+    border: solid 1px;
+    height: 32%;
+    align-items: center;
+}
+
+.cell {
+    width: 31%;
+    border: solid 1px #eee;
+    height: 31%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    position: relative;
+    background-color: white;
+}
+
+.possibilities {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    display: flex;
+    font-size: 10px;
+    color: #9e9e9e;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.possibilities div {
+    width: 33%;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+}
+
+.hasValue {
+    color: blue;
+}
+
+.highlighted {
+    background-color: #eef;
+    color: blue;
+}
+
+
+.highlighted-square {
+    background-color: #e2e8ff;
+    color: blue;
+}
+
+.selected {
+    border-color: black;
+    background: aliceblue;
+}
+
+.attempt {
+    margin-top: 16px;
+}
+
+.solved {
+    background: #2196F3;
+    border-color: currentColor;
+    color: #fff;
+}
+
+
+.loader {
+    flex-grow: 1;
+    margin-left: 50px;
+}
+
+.wrapper {
+    display: flex;
+}
+
+#input {
+    width: 100%;
+}
+
+.bold {
+    font-weight: bold;
+    color: black;
+}
+
+.highlight-hovered .cell:hover {
+    transition: transform .1s;
+    position: relative;
+    transform: scale(1.6);
+    z-index: 10;
+}
+
+
+.marked {
+    color: tomato;
+}
+
+.cell-index {
+    position: absolute;
+    left: 50%;
+    top: 1px;
+    transform: translate(-50%, -50%);
+    font-size: 11px;
+    color: #40bae0;
+    z-index: 1;
+    background: inherit;
+}
+
+.cell.solved .cell-index {
+    background-color: #fff;
+}
+
+.cell.two-possibilities {
+    border-color: blueviolet;
+}

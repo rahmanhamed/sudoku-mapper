@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="./style.css"/>
+
+        <script>var exports = {};</script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
+        <script type="text/javascript">
+            var exports = {}
+            const puzzles = [
+                // easy
+                ["", "9", "", "", "", "3", "", "", "", "", "5", "7", "1", "", "", "", "3", "8", "2", "", "", "9", "4", "", "7", "", "", "", "", "", "4", "3", "", "1", "", "", "7", "", "", "", "", "", "5", "", "", "", "3", "4", "", "", "", "", "8", "", "", "8", "6", "", "", "5", "", "", "", "", "", "", "", "", "", "", "1", "6", "", "4", "", "", "2", "1", "", "", ""],
+
+                // very hard
+                ["", "", "", "6", "", "3", "", "", "", "", "7", "", "", "8", "", "4", "", "2", "", "", "", "", "", "", "6", "5", "", "5", "", "", "", "3", "9", "", "8", "", "", "", "", "", "4", "", "", "1", "9", "", "", "4", "", "", "", "", "", "", "4", "", "", "9", "", "", "", "", "8", "2", "", "", "", "", "", "", "", "", "", "6", "", "", "", "", "7", "", ""],
+                [0,2,8,0,5,0,0,0,3,5,0,0,0,2,0,8,0,9,0,0,0,0,0,6,7,2,0,0,5,0,9,0,8,0,0,0,0,0,0,0,0,0,0,4,7,3,0,6,0,0,0,2,0,0,0,0,5,0,0,7,0,0,1,0,6,1,3,0,0,0,0,0,0,0,0,0,8,0,0,0,0]
+
+
+            ]
+            requirejs(['solve'], () => {
+                const cells = [3,0,0,0,0,4,0,8,9,9,0,0,5,0,0,0,0,0,0,7,0,8,0,9,0,0,2,5,0,4,0,0,0,8,0,0,7,1,0,0,0,0,3,0,0,8,0,0,0,0,6,0,0,0,0,0,0,4,1,7,0,0,0,0,0,0,0,2,0,6,4,0,0,0,0,0,5,0,1,0,0];
+                const grid = new Grid();
+                cells.forEach(cell => grid.addCell(cell ? parseInt(cell) : null));
+                const squares = grid.getSquares();
+                const container = document.getElementById('container');
+                let solution = new Solution(grid);
+                let showPossibilities = true, showIndex = true;
+                createCells(squares);
+                document.addEventListener('keydown', e => {
+                    if (e.which === 17) {
+                        container.classList.add('highlight-hovered');
+                    }
+                });
+
+                document.addEventListener('keyup', e => {
+                    
+                    if (e.which === 18) {
+                        showIndex = !showIndex;
+                        updateCells();
+                    }
+
+                    if (e.which === 17) {
+                        container.classList.remove('highlight-hovered');
+                    }
+
+                    if (e.which >= 49 - 1 && e.which <= 57) {
+                        const value = e.which - 48;
+                        
+                        container.querySelectorAll('div').forEach(div => {
+                            if (div.innerText === value.toString()) {
+                                div.classList.add('bold');
+                            } else {
+                                div.classList.remove('bold');
+                            }
+                        })
+                    }
+                });
+                document.addEventListener('click', e => {
+                    const { target } = e;
+                    if (target.parentNode.classList.contains('possibilities')) {
+                        const possibility = target.innerText;
+                        const cellElement = getFirstParentSelector(target, '.cell');
+                        const cellIndex = cellElement.getAttribute('data-index');
+                        const cell = grid.getCell(cellIndex);
+                        const unsolvedData = solution.getUnsolvedCellData(cell);
+                        unsolvedData.removePossibility(parseInt(possibility));
+                        updateCells(grid.getSquares());
+                    }
+                })
+                function createCells(squares) {
+                    let squareOrder = 0;
+                    container.innerHTML = '';
+                    squares.forEach(cellGroup => {
+                        const squareElement = document.createElement('div');
+                        squareElement.classList.add('square');
+                        let cellIndex = 0;
+                        cellGroup.cells.forEach(cell => {
+                            const cellElement = document.createElement('div');
+                            
+                            cellElement.classList.add('cell');
+                            
+                            cellElement.setAttribute('data-order', cellIndex);
+                            cellElement.setAttribute('data-square-order', squareOrder);
+                            cellElement.setAttribute('data-index', cell.index);
+                            cellElement.addEventListener('click', cellClick);
+                            squareElement.appendChild(cellElement);
+                            cellIndex++;
+                        });
+                        container.appendChild(squareElement);
+                        squareOrder++;
+                    });
+                    updateCells(squares);
+                }
+
+                function updateCells(squares) {
+                    squares = squares || grid.getSquares();
+                    squares.forEach(cellGroup => {
+                        cellGroup.cells.forEach(cell => {
+                            const cellElement = getCellElementByIndex(cell.index);
+                            cellElement.innerText = cell.getValue();
+                            if (cell.solved()) {
+                                cellElement.classList.add('solved');
+                            }
+                            if (cell.value) {
+                                cellElement.classList.add('hasValue');
+                            }
+                            if (showIndex) {
+                                const indexElement = document.createElement('div');
+                                indexElement.classList.add('cell-index');
+                                indexElement.innerText = cell.index;
+                                cellElement.appendChild(indexElement);
+                            }
+                        });
+                    });
+                    updatePossibilities();
+                }
+
+                function getCellElementByIndex(index) {
+                    return document.querySelector(`.cell[data-index="${index}"]`);
+                }
+
+                function unselectAllCells() {
+                    container.querySelectorAll('.highlighted, .highlighted-square, .selected').forEach(e => e.classList.remove('highlighted', 'highlighted-square', 'selected'));
+                }
+
+                function getFirstParentSelector(element, selector) {
+                    let parent = element;
+                    while (parent && !parent.matches(selector)) {
+                        parent = parent.parentNode;
+                    }
+                    return parent;
+                }
+                function cellClick(e) {
+                    const cellElement = getFirstParentSelector(e.target, '.cell');
+                    if (cellElement.classList.contains('selected')) {
+                        unselectAllCells();
+                        return;
+                    }
+                    unselectAllCells();
+                    
+                    
+                    const squarePosition = cellElement.getAttribute('data-square-order');
+                    const cellPosition = cellElement.getAttribute('data-order');
+                    const square = grid.getSquare(squarePosition);
+                    const cell = square.cells[cellPosition];
+                    const row = grid.getCellRow(cell);
+                    const col = grid.getCellCol(cell);
+                    cellElement.classList.add('selected');
+                    [row, col].forEach(group => {
+                        group.cells.forEach(cell => {
+                            const cellElement = getCellElementByIndex(cell.index);
+                            cellElement.classList.add('highlighted');
+                        })
+                    })
+                    square.cells.forEach(cell => {
+                        const cellElement = getCellElementByIndex(cell.index);
+                        cellElement.classList.add('highlighted-square');
+                    });
+
+                    const possiblities = cell.getValue() || solution.getCellPossibilities(cell);
+                    console.log(possiblities);
+                }
+
+                
+                
+
+                document.querySelector('.attempt').addEventListener('click', e => {
+                    e.preventDefault();
+                    const solved = solution.solve(false, () => {
+                        updateCells(grid.getSquares());
+                        if (showPossibilities) {
+                            updatePossibilities();
+                        }
+                        console.log({solved});
+                    });
+                })
+
+                
+                document.querySelector('.recurse').addEventListener('click', e => {
+                    e.preventDefault();
+                    const solved = solution.solve(true);
+                    updateCells(grid.getSquares());
+                    if (showPossibilities) {
+                        updatePossibilities();
+                    }
+                    console.log({solved});
+                })
+
+
+
+                document.querySelector('.load').addEventListener('click', e => {
+                    const input = document.querySelector('#input');
+                    
+                    const cells = JSON.parse(input.value);
+                    
+                    grid.reset();
+                    cells.forEach(cell => grid.addCell(cell ? parseInt(cell) : null));
+                    createCells(grid.getSquares());
+                    solution = new Solution(grid);
+                });
+
+                function updatePossibilities() {
+                    grid.getCells().forEach(cell => {
+                        const possibilitiesDiv = document.createElement('div');
+                        possibilitiesDiv.classList.add('possibilities');
+                        const cellElement = getCellElementByIndex(cell.index)
+                        cellElement.appendChild(possibilitiesDiv);
+                        if (cell.getValue()) {
+                            return;
+                        }
+                        const possiblities = solution.getCellPossibilities(cell);
+                        for (let i = 1; i <= 9; i++) {
+                            possibilityDiv = document.createElement('div');
+                            possibilitiesDiv.appendChild(possibilityDiv);
+                            if (possiblities.indexOf(i) !== -1) {
+                                possibilityDiv.innerText = i;
+                            } else {
+                                possibilityDiv.innerHTML = '&nbsp;';
+                            }
+                        }
+                        if (possiblities.length === 2) {
+                            cellElement.classList.add('two-possibilities');
+                        } else {
+                            cellElement.classList.remove('two-possibilities');
+                        }
+                    })
+                }
+
+                document.querySelector('.showPossibilities').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showPossibilities = !showPossibilities;
+                    if (showPossibilities) {
+                        updatePossibilities();
+                    } else {
+                        document.querySelectorAll('.possibilities').forEach(possibilitiesDiv => possibilitiesDiv.remove());
+                    }
+                })
+            });
+
+        </script>
+    </head>
+    <body>
+        <div class="wrapper">
+
+            <div id="container"></div>
+            
+            <div class="loader">
+                <textarea id="input">["", "", "", "6", "", "3", "", "", "", "", "7", "", "", "8", "", "4", "", "2", "", "", "", "", "", "", "6", "5", "", "5", "", "", "", "3", "9", "", "8", "", "", "", "", "", "4", "", "", "1", "9", "", "", "4", "", "", "", "", "", "", "4", "", "", "9", "", "", "", "", "8", "2", "", "", "", "", "", "", "", "", "", "6", "", "", "", "", "7", "", ""]</textarea>
+                <button class="load">Load</button>
+            </div>
+        </div>
+        
+        <div class="action">
+            <button class="attempt">Attempt</button>
+            <button class="showPossibilities">Show Possibilities</button>
+            <button class="recurse">Recurse</button>
+
+        </div>
+    </body>
+</html>
